@@ -22,7 +22,7 @@
 ####Open .Elico folder > Open "initrd" file with your favourite text editor > Add a new string with pressing "Enter ↵" key > Then write something looks like this:
 >TestOSName;testosloaderfile
 
-####[WARING: Do not add more than you need new strins! Else you get error in bootloader.]
+####[WARING: Do not add more than you need new strings! Else you get error in bootloader.]
 
 ##Screenshots:
 <a target="_blank" href="http://itmages.ru/image/view/2779095/d91d16c6"><img src="http://storage3.static.itmages.ru/i/15/0719/s_1437347506_9735670_d91d16c6df.png" /></a>
