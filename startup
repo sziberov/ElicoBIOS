@@ -1,0 +1,801 @@
+-- Local Variables                                      --
+local x,y = term.getSize()
+local bootOpt = { }
+local sides = { "left", "right", "top", "bottom", "front", "back"}
+local sidesList = { "left", "right", "top", "bottom", "front", "back"}
+local driveCount = 1
+local driveCount0 = 1
+local turtleCount = 1
+local computerCount = 1
+local monitorCount = 1
+local modemCount = 1
+local printerCount = 1
+local modemExists = false
+local modemSide = "right"
+local bootDriveExists = false
+local bootDrive = "right"
+local bootableDisk = false
+local mountName = "disk"
+local labLen = 13
+local slc = 1
+local bytesFree = fs.getFreeSpace("/")
+local clientId = os.computerID()
+local w, h = term.getSize()
+oldx, oldy = term.getCursorPos()
+--BIOS SETUP
+local logoEnabled = 1 --(1 = Enabled/0 = Disabled)
+local splashEnabled = 1 --(1 = Enabled/0 = Disabled)
+local animatedSplash = 1 --(1 = Enabled/0 = Disabled)
+local passwordProtection = 0 --(1 = Enabled/0 = Disabled)
+local password = "1111" --(Input only 20- symbols password.)
+local CPUType = "UltraCore" --(Input only 9- symbols text.)
+local CPUClock = "3.4GHz" --(Input only 9- symbols text.)
+--End of SETUP
+
+
+--Local Functions                                      --
+
+--Password Lock
+function passwordLock()
+	local function readN(len, replaceChar)
+	  len = len or 10
+	  local input=""
+	  local key = 0
+	  term.setCursorBlink(true)
+	  repeat
+	        local e,p1 = os.pullEvent()
+	        if e=="char" then
+	          if #input < len then
+	                input = input .. p1
+	                term.write(replaceChar or p1)
+	          end
+	        elseif e=="key" and p1==keys.backspace and #input > 0 then
+	          input = input:sub(1,#input-1)
+	          local x,y = term.getCursorPos()
+	          term.setCursorPos(x-1,y)
+	          term.write(" ")
+	          term.setCursorPos(x-1,y)
+	        end
+	  until p1==keys.enter
+	  term.setCursorBlink(false)
+	  return input
+	end
+
+	function dropShadow()
+		if term.isColor() then
+			term.setBackgroundColor(colors.gray)
+		else
+			term.setBackgroundColor(colors.black)
+		end
+		term.setCursorPos(38,9)
+		print(" ")
+		term.setCursorPos(38,10)
+		print(" ")
+		term.setCursorPos(38,11)
+		print(" ")
+		term.setCursorPos(38,12)
+		print(" ")
+		term.setCursorPos(15,13)
+		print("                        ")
+	end
+
+	while true do 
+	 term.setBackgroundColor(colors.black)
+	 term.clear()
+	 term.setCursorPos(1,1)
+	 if term.isColor() then
+	 	 term.setBackgroundColor(colors.blue)
+	 	 term.setTextColor(colors.lightGray)
+	 else
+	 	 term.setBackgroundColor(colors.black)
+	 	 term.setTextColor(colors.white)
+	 end
+	 centerText("+----Enter Password----+", 8)
+	 centerText("|                      |", 9)
+	 centerText("|                      |", 10)
+	 centerText("|                      |", 11)
+	 centerText("+----------------------+", 12)
+	 dropShadow()
+	 if term.isColor() then
+	 	 term.setBackgroundColor(colors.lightGray)
+	 	 term.setTextColor(colors.black)
+	 else
+	 	 term.setBackgroundColor(colors.white)
+	 	 term.setTextColor(colors.black)
+	 end
+	 centerText("                    ", 10)
+	 term.setCursorPos(16,10)
+	 local input = readN(20, "*")
+	 if input == password then
+	  term.setBackgroundColor(colors.black)
+	  term.clear()
+	  break
+	 else
+	  term.setBackgroundColor(colors.black)
+	  term.clear()
+	  term.setCursorPos(1,1)
+	  if term.isColor() then
+	 	  term.setBackgroundColor(colors.blue)
+	 	  term.setTextColor(colors.lightGray)
+	  else
+	 	  term.setBackgroundColor(colors.black)
+	 	  term.setTextColor(colors.white)
+	  end
+	  centerText("+----Enter Password----+", 8)
+	  centerText("|                      |", 9)
+	  centerText("| Invalid Password     |", 10)
+	  centerText("|                      |", 11)
+	  centerText("+----------------------+", 12)
+	  dropShadow()
+	  sleep(1)
+	  if term.isColor() then
+	 	  term.setBackgroundColor(colors.black)
+	 	  term.setTextColor(colors.lightGray)
+	  else
+	 	  term.setBackgroundColor(colors.black)
+	 	  term.setTextColor(colors.white)
+	  end
+	 end
+	end
+end
+
+-- Disable "Terminate" function                         --
+function os.pullEvent()
+    local event, p1, p2, p3, p4, p5 = os.pullEventRaw()
+    if event == "terminate" then
+     
+    end
+    return event, p1, p2, p3, p4, p5
+end
+
+
+-- Print Centred Text Function                          --
+function centerText(text, line)
+	x,y = term.getSize()
+	term.setCursorPos(math.ceil((x / 2) - (text:len() / 2)), line)
+	term.write(text)
+end
+
+
+-- Split String Function                                --
+function split(str, pattern)
+	local t = { }
+	local fpat = "(.-)" .. pattern
+	local last_end = 1
+	local s, e, cap = str:find(fpat, 1)
+	while s do
+		if s ~= 1 or cap ~= "" then
+			table.insert(t,cap)
+		end
+		last_end = e+1
+		s, e, cap = str:find(fpat, last_end)
+	end
+	if last_end <= #str then
+		cap = str:sub(last_end)
+		table.insert(t, cap)
+	end
+	return t
+end
+
+
+-- Get list of Boot Options Function                    --
+local function readBootOptions()
+	if not fs.exists(".Elico/initrd") then return end
+	local file = io.open(".Elico/initrd", "r")
+	c = 0
+	for line in file:lines()do
+		c = c + 1
+		local t = split(line, ";")
+		table.insert(bootOpt, { 
+			name = t[1],
+			dir = t[2],
+			args = t[3] })
+		if c == 10 then break end  
+	end
+	if bootableDisk then
+		table.insert(bootOpt, { 
+			name = "Disk",
+			dir = mountName,
+			args = ""})
+	end
+	file:close()
+end
+
+
+-- Draw Logo                                           --
+term.clear()
+sleep(1.0)
+if term.isColor() then
+	term.setTextColor(colors.lightGray)
+end
+term.setCursorPos(1,1)
+term.clear()
+if passwordProtection == 1 then
+	passwordLock()
+	term.clear()
+	sleep(0.1)
+end
+if term.isColor() then
+	term.setTextColor(colors.lightGray)
+end
+if term.isColor() then
+	if splashEnabled == 1 then
+		if animatedSplash == 1 then
+			term.setCursorBlink(true)
+			if not fs.exists (".Elico/Splash1.logo") then
+				term.setCursorBlink(false)
+				term.setCursorPos(1,1)
+				term.write ("SPLASH FILES NOT FOUND, STARTING WITHOUT IT!")
+				sleep(1.5)
+				term.setBackgroundColor(colors.black)
+				term.clear()
+				sleep(0.1)
+				elseif not fs.exists (".Elico/Splash2.logo") then
+				term.setCursorPos(1,1)
+				term.write ("SPLASH FILES NOT FOUND, STARTING WITHOUT IT!")
+				sleep(1.5)
+				term.setBackgroundColor(colors.black)
+				term.clear()
+				sleep(0.1)
+				elseif not fs.exists (".Elico/Splash3.logo") then
+				term.setCursorPos(1,1)
+				term.write ("SPLASH FILES NOT FOUND, STARTING WITHOUT IT!")
+				sleep(1.5)
+				term.setBackgroundColor(colors.black)
+				term.clear()
+				sleep(0.1)
+			else
+				term.setCursorBlink(false)
+				local image = paintutils.loadImage(".Elico/Splash1.logo")
+				paintutils.drawImage(image, 1, 1)  
+				term.setCursorPos(16,14)
+				term.setBackgroundColor(colors.black)
+				term.setTextColor(colors.gray)
+				term.write("Inspiring ") 
+				term.setTextColor(colors.gray)
+				term.write("Innovation")
+				sleep(0.05) 
+				local image = paintutils.loadImage(".Elico/Splash2.logo")
+				paintutils.drawImage(image, 1, 1)  
+				term.setCursorPos(16,14)
+				term.setBackgroundColor(colors.black)
+				term.setTextColor(colors.green)
+				term.write("Inspiring ") 
+				term.setTextColor(colors.lightGray)
+				term.write("Innovation")
+				sleep(0.05) 
+				local image = paintutils.loadImage(".Elico/Splash3.logo")
+				paintutils.drawImage(image, 1, 1)  
+				term.setCursorPos(16,14)
+				term.setBackgroundColor(colors.black)
+				term.setTextColor(colors.lime)
+				term.write("Inspiring ") 
+				term.setTextColor(colors.white)
+				term.write("Innovation")
+				sleep(2.0) 
+				term.setBackgroundColor(colors.black)
+				term.clear()
+				sleep(0.1)
+			end  
+		else
+			term.setCursorBlink(true)
+			if not fs.exists (".Elico/Splash.logo") then
+				term.setCursorBlink(false)
+				term.setCursorPos(1,1)
+				term.write ("SPLASH FILE NOT FOUND, STARTING WITHOUT IT!")
+				sleep(1.5)
+				term.setBackgroundColor(colors.black)
+				term.clear()
+				sleep(0.1)
+			else
+				term.setCursorBlink(false)
+				local image = paintutils.loadImage(".Elico/Splash.logo")
+				paintutils.drawImage(image, 1, 1) 
+				sleep(2.0) 
+				term.setBackgroundColor(colors.black)
+				term.clear()
+				sleep(0.1)
+			end 
+		end
+	end
+end
+---------------------------------------------------------------
+
+term.clear()
+if term.isColor() then
+	if logoEnabled == 1 then
+		if fs.exists(".Elico/Bios.logo") then
+		local image = paintutils.loadImage(".Elico/Bios.logo")
+		paintutils.drawImage(image, w - 12, h - h + 2)
+		term.setBackgroundColor(colors.black)
+		term.setTextColor(colors.lime)
+		term.setCursorPos(w - 12,7)
+		term.write("------------")
+		term.setCursorPos(w - 12,8)
+		term.write("SoftWareKing")
+		end
+	end
+end
+
+term.setBackgroundColor(colors.black) 
+if term.isColor() then
+	term.setTextColor(colors.blue)
+else
+	term.setTextColor(colors.white)
+end
+term.setCursorPos(1,1)
+term.write("()")
+term.setCursorPos(1,2)
+term.write("][")
+
+if term.isColor() then
+	term.setCursorPos(3,1)
+	term.setBackgroundColor(colors.black) 
+	term.setTextColor(colors.lightGray)
+else
+	term.setCursorPos(3,1)
+	term.setBackgroundColor(colors.black) 
+	term.setTextColor(colors.white)
+end
+term.write("Elico BIOS v5.87")
+term.setCursorPos(3,2)
+term.write("Copyright (C) Elico Software")
+term.setCursorPos(1,h)
+term.write("20/07/2015-Elico-BIOS/Version-5-87/AZUZ-PC")
+
+for i = 1,6 do
+	if peripheral.isPresent(sidesList[i]) then
+		if peripheral.getType(sidesList[i]) == "modem" then
+			modemExists = true
+			modemSide = sidesList[i]
+		end
+	end
+end
+
+if term.isColor() then
+	if modemExists then
+		term.setCursorPos(1,h - 1)
+		term.write("Modem <")
+		term.setTextColor(colors.white)
+		term.write("CONNECTED")
+		term.setTextColor(colors.lightGray)
+		term.write(">: ["..modemSide.."] IP: "..clientId.."")
+	else
+		term.setCursorPos(1,h - 1)
+		term.write("Modem <")
+		term.setTextColor(colors.white)
+		term.write("NOT CONNECTED")
+		term.setTextColor(colors.lightGray)
+		term.write(">")
+	end
+else
+	if modemExists then
+		term.setCursorPos(1,h - 1)
+		term.write("Modem <CONNECTED>: ["..modemSide.."] IP: "..clientId.."")
+	else
+		term.setCursorPos(1, h - 1)
+		term.write("Modem <NOT CONNECTED>")
+	end
+end
+
+sleep(1.0)
+term.setCursorPos(1,4)
+term.write("Main Processor : ")
+term.setCursorBlink(true)
+sleep(0.8)
+term.write(""..CPUType.." "..CPUClock.."")
+term.setCursorPos(1,5)
+term.write("Memory Testing : ")
+sleep(0.8)
+term.write(""..bytesFree.."K FREE")
+term.setCursorBlink(false)
+sleep(1.0)
+term.setTextColor(colors.white)
+term.setCursorPos(1,7)
+term.write("Trend ChipAwayBlock (R) On Guard")
+if term.isColor() then
+	term.setTextColor(colors.lightGray)
+end
+sleep(1.0)
+term.setCursorPos(1,9)
+term.write("Detecting DISK Drives ...")
+sleep(1.4)
+if driveCount > 1 then
+term.setCursorPos(1,9)
+term.write("                         ")
+else 
+term.setCursorPos(1,9)
+term.write("No DISK Drives Connected ")
+end
+
+for i = 1,6 do
+	
+	if peripheral.isPresent(sidesList[i]) then
+		if  peripheral.getType(sidesList[i]) == "drive" then
+			mountName = "None"
+			if disk.isPresent(sidesList[i]) then
+				mountName = disk.getMountPath(sidesList[i])
+			end
+			if driveCount > 1 then
+                     term.setCursorPos(1,(8+driveCount))
+				term.write("DISK Channel ".. driveCount .." Slave  : "..mountName.."")
+                                sleep(0.05)
+			else
+                     term.setCursorPos(1,(8+driveCount))
+				term.write("DISK Channel ".. driveCount .." Master : "..mountName.."")
+                                sleep(0.05)
+				bootDrive = sidesList[i]
+				bootDriveExists = true
+			end
+			driveCount = driveCount + 1
+		end
+	end
+end
+sleep(1.8)
+
+term.clear()
+term.setCursorPos(1,1)
+term.setCursorBlink(true)
+sleep(2.0)
+term.setCursorBlink(false)
+term.clear()
+term.setCursorPos(1,1)
+if term.isColor() then
+	term.setTextColor(colors.lightGray)
+end
+term.write(string.rep(" ", x))
+centerText("Elico Software", 1)
+term.write(string.rep(" ", x))
+centerText("System Configurations", 2)
+
+print ("+-------------------------------------------------+")
+print ("|CPU Type  :           | Free Memory :            |")
+print ("|CPU Clock :           | CPU ID :                 |")
+print ("+-------------------------------------------------+")
+print ("|                            | Display :          |")
+print ("|                            |                    |")
+print ("|                            |                    |")
+print ("|                            |                    |")
+print ("|                            |                    |")
+print ("+-------------------------------------------------+")
+print ("                                                   ")
+print ("ALL device listing .....                           ")
+print ("Device Class    Number    Side                     ")
+print ("---------------------------------------------------")
+
+if term.isColor() then
+	term.setCursorPos(42,7)
+	term.write("Advanced")
+else
+	term.setCursorPos(42,7)
+	term.write("Typical")
+end
+
+if driveCount < 2 then
+term.setCursorPos(2,7)
+term.write("Disk Master : Not Connected")
+end
+
+if driveCount < 3 then
+term.setCursorPos(2,8)
+term.write("Disk Slave  : Not Connected")
+end
+
+if driveCount < 4 then
+term.setCursorPos(2,9)
+term.write("Disk Slave  : Not Connected")
+end
+
+if driveCount < 5 then
+term.setCursorPos(2,10)
+term.write("Disk Slave  : Not Connected")
+end
+
+if driveCount < 6 then
+term.setCursorPos(2,11)
+term.write("Disk Slave  : Not Connected")
+end
+
+local driveCount = 1
+
+for i = 1,6 do
+
+	if peripheral.isPresent(sidesList[i]) then
+		if  peripheral.getType(sidesList[i]) == "drive" then
+			mountName = "None"
+			if disk.isPresent(sidesList[i]) then
+				mountName = disk.getMountPath(sidesList[i])
+			end
+			if driveCount > 1 then
+                     term.setCursorPos(2,(6+driveCount))
+				term.write("Disk Slave  : "..mountName.." ["..sidesList[i].."]")
+			else
+                     term.setCursorPos(2,(6+driveCount))
+				term.write("Disk Master : "..mountName.." ["..sidesList[i].."]")
+				bootDrive = sidesList[i]
+				bootDriveExists = true
+			end
+			driveCount = driveCount + 1
+		end
+	end
+end
+
+term.setCursorPos(14,4)
+print(""..CPUType.."")
+term.setCursorPos(14,5)
+print(""..CPUClock.."")
+
+term.setCursorPos(40,4)
+print(""..bytesFree.."K")
+term.setCursorPos(35,5)
+print(""..clientId.."")
+
+term.setCursorPos(1,17)
+
+for i = 1, #sides do
+  if peripheral.isPresent(sides[i]) then
+        if peripheral.getType(sides[i]) == "computer" then
+          computerSide = sidesList[i]
+          print("Computer        "..computerCount.."         "..computerSide.." ")
+          computerCount = modemCount + 1
+          sleep(0.3)
+        end
+  end
+end
+for i = 1, #sides do
+  if peripheral.isPresent(sides[i]) then
+        if peripheral.getType(sides[i]) == "drive" then
+          driveSide = sidesList[i]
+          print("Disk Drive      "..driveCount0.."         "..driveSide.." ")
+          driveCount0 = driveCount0 + 1
+          sleep(0.3)
+        end
+  end
+end
+for i = 1, #sides do
+  if peripheral.isPresent(sides[i]) then
+        if peripheral.getType(sides[i]) == "modem" then
+          modemSide = sidesList[i]
+          print("Modem           "..modemCount.."         "..modemSide.." ")
+          modemCount = modemCount + 1
+          sleep(0.3)
+        end
+  end
+end
+for i = 1, #sides do
+  if peripheral.isPresent(sides[i]) then
+        if peripheral.getType(sides[i]) == "monitor" then
+          monitorSide = sidesList[i]
+          print("Monitor         "..monitorCount.."         "..monitorSide.." ")
+          monitorCount = monitorCount + 1
+          sleep(0.3)
+        end
+  end
+end
+for i = 1, #sides do
+  if peripheral.isPresent(sides[i]) then
+        if peripheral.getType(sides[i]) == "printer" then
+          printerSide = sidesList[i]
+          print("Printer         "..printerCount.."         "..printerSide.." ")
+          printerCount = printerCount + 1
+          sleep(0.3)
+        end
+  end
+end
+for i = 1, #sides do
+  if peripheral.isPresent(sides[i]) then
+        if peripheral.getType(sides[i]) == "turtle" then
+          turtleSide = sidesList[i]
+          print("Turtle          "..turtleCount.."         "..turtleSide.." ")
+          turtleCount = modemCount + 1
+          sleep(0.3)
+        end
+  end
+end
+
+print("")
+sleep(0.3)
+print("")  
+sleep (0.3)
+local sides = { "left", "right", "top", "bottom", "front", "back"}
+for i = 1, #sides do
+  if peripheral.isPresent(sides[i]) then
+        if peripheral.getType(sides[i]) == "drive" then
+          term.setCursorPos(1,19)
+          print ("Verifying DISK Drives Data ")
+          sleep (0.05)
+          term.setCursorPos(1,18)
+          print ("Verifying DISK Drives Data .")
+          sleep (0.05)
+          term.setCursorPos(1,18)
+          print ("Verifying DISK Drives Data ..")
+          sleep (0.05)
+          term.setCursorPos(1,18)
+          print ("Verifying DISK Drives Data ...")
+          sleep (0.05)
+          term.setCursorPos(1,18)
+          print ("Verifying DISK Drives Data ....")
+          sleep (0.05)
+          term.setCursorPos(1,18)
+          print ("Verifying DISK Drives Data .....")
+          sleep (0.05) 
+          term.setCursorPos(1,18)
+          print ("Verifying DISK Drives Data ......")
+          sleep (0.05)
+          term.setCursorPos(1,18)
+          print ("Verifying DISK Drives Data .......")
+          sleep (0.05)
+          term.setCursorPos(1,18)
+          print ("Verifying DISK Drives Data ........")
+          sleep (0.05) 
+          term.setCursorPos(1,18)
+          print ("Verifying DISK Drives Data .........")
+          sleep (0.05)
+          term.setCursorPos(1,18)
+          print ("Verifying DISK Drives Data ..........")
+          sleep (0.05)
+          term.setCursorPos(1,18)
+          print ("Verifying DISK Drives Data .......... Success")
+          sleep (0.7)
+          break
+        end
+  end
+end
+
+if fs.exists(".Elico/initrd") then
+term.setCursorPos(1,19)
+print ("Starting ElicoBoot ...")
+term.setCursorPos(1,18)
+sleep (1.2)
+term.clear()
+term.setTextColor(colors.white)
+
+if bootDriveExists and disk.isPresent(bootDrive) then
+	mountName = disk.getMountPath(bootDrive).."/autoexec"
+	if fs.exists(mountName) then
+		bootableDisk = true
+	end
+end
+
+-- Launch Boot Manager                                  --
+readBootOptions()
+
+-- Draw Boot Manager GUI Interface                      --
+local bootOptLen = table.getn(bootOpt)
+while true do
+	if term.isColor() then
+		term.setBackgroundColor(colors.lightGray)
+	else
+		term.setBackgroundColor(colors.white)
+	end
+	term.clear()
+	term.setCursorPos(1,1)
+	if term.isColor() then
+		term.setBackgroundColor(colors.lightGray)
+		term.setTextColor(colors.lime)
+	else
+		term.setBackgroundColor(colors.white)
+		term.setTextColor(colors.black)
+	end
+	term.write(string.rep(" ", x))
+	centerText("<> ElicoBoot", (19 / 2 - c / 2 - 1))
+	
+	for i=1,bootOptLen do
+		local str = "Option"
+		local nameLen = string.len(bootOpt[i].name)
+		local addspaces = labLen - tonumber(nameLen)
+		if addspaces >= 0 then
+			str = --[[i.." "..bootOpt[i].name]]"  "..bootOpt[i].name..""
+			str = str..string.rep(" ", addspaces)
+		else
+			str = string.sub(bootOpt[i].name, 1, labLen)
+		end
+		if term.isColor then
+			if i == slc then
+				if term.isColor() then
+					term.setBackgroundColor(colors.gray)
+					term.setTextColor(colors.lightGray)
+				else
+					term.setBackgroundColor(colors.black)
+					term.setTextColor(colors.white)
+				end
+					term.setCursorPos(19,(19 / 2 - c / 2 + i))
+	                	write(str)
+					term.setCursorPos(18,(19 / 2 - c / 2 + i))
+						write("->")
+	                
+	                
+			else 
+				if term.isColor() then
+					term.setBackgroundColor(colors.lightGray)
+					term.setTextColor(colors.gray)
+				else
+					term.setBackgroundColor(colors.white)
+					term.setTextColor(colors.black)
+				end
+	                term.setCursorPos(19,(19 / 2 - c / 2 + i))
+						write(str)
+	                term.setCursorPos(18,(19 / 2 - c / 2 + i))
+	                	write("  ")
+			end
+		else
+			if i == slc then
+				if term.isColor() then
+					term.setBackgroundColor(colors.gray)
+					term.setTextColor(colors.lightGray)
+				else
+					term.setBackgroundColor(colors.black)
+					term.setTextColor(colors.white)
+				end
+					term.setCursorPos(19,(19 / 2 - c / 2 + i))
+	                	write(str)
+					term.setCursorPos(18,(19 / 2 - c / 2 + i))
+						write("->")
+	                
+	                
+			else 
+				if term.isColor() then
+					term.setBackgroundColor(colors.lightGray)
+					term.setTextColor(colors.gray)
+				else
+					term.setBackgroundColor(colors.white)
+					term.setTextColor(colors.black)
+				end
+	                term.setCursorPos(19,(19 / 2 - c / 2 + i))
+						write(str)
+	                term.setCursorPos(18,(19 / 2 - c / 2 + i))
+	                	write("  ")
+			end
+		end
+	end
+	if term.isColor() then
+		term.setBackgroundColor(colors.lightGray)
+		term.setTextColor(colors.gray)	
+	else
+		term.setBackgroundColor(colors.white)
+		term.setTextColor(colors.black)	
+	end
+        term.setCursorPos(4, (y-1))
+	write("Press F5 to restart or F6 to shutdown system.")
+        term.setTextColor(colors.white)
+	term.setCursorPos(1,1)
+	local event, p1, p2 = os.pullEvent()
+	if event == "key" then 
+		if p1 == keys.up and slc > 1 then slc=slc-1
+		elseif p1 == keys.down and slc < bootOptLen then slc=slc+1
+		elseif p1 == keys.enter then
+			local args = { }
+			bootOptcmd = bootOpt[slc].dir
+			if bootOpt[slc].args ~= null then
+				args = split(bootOpt[slc].args, ",")
+				for a=1,table.getn(args) do
+					bootOptcmd = bootOptcmd.." "..args[a]
+
+				end
+			end	
+			term.setBackgroundColor(colors.black)
+			term.clear()
+			shell.run(bootOptcmd)
+			sleep(1)
+		elseif p1 == keys.f5 then
+		    os.reboot()
+		elseif p1 == keys.f6 then
+		    os.shutdown()
+		end
+	end
+end
+function restoreEvent()
+    function os.pullEvent( _sFilter )
+    local event, p1, p2, p3, p4, p5 = os.pullEventRaw( _sFilter )
+    if event == "terminate" then
+        print( "Terminated" )
+        error()
+    end
+    return event, p1, p2, p3, p4, p5
+end
+end
+
+else 
+term.setCursorPos(1,19)
+print ("BOOT FAILURE, CREATE BOOTLIST FILE AND REBOOT")
+end

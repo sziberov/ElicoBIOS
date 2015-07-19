@@ -1,0 +1,3 @@
+term.setCursorPos(1,1)
+print("This is a test")
+sleep(0.5)
