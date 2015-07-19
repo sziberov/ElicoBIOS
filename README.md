@@ -19,7 +19,7 @@
 
 ##Adding your OS to bootloader:
 
-####Open .Elico folder > Open "initrd" file with your favourite text editor > Add a new string with pressing "Enter ↵" key > Then write something looks like this:
+####Open .Elico folder > Open "initrd" file with your favourite text editor > Add a new (blank, thank you Cap) string with pressing "Enter ↵" key > Then write something looks like this:
 >TestOSName;testosloaderfile
 
 ####[WARING: Do not add more than you need new strings! Else you get error in bootloader.]
