@@ -11,7 +11,7 @@
 
 ####5. Device listing (System Configurations screen)
 
-####6. Basic bootloader without sandboxing (Sorry, i don't kow how to add it)
+####6. Basic bootloader without sandboxing (Sorry, i don't know how to add it)
 
 ####7. Missing of any of core files, or .Elico folder
 
