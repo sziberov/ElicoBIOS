@@ -15,7 +15,9 @@
 
 ####7. Missing of any of core files, or .Elico folder
 
-####8. Something else about what i maybe forgot :D
+####8. Blocking Ctrl+T. It means you can't terminate BIOS while it booting
+
+####9. Something else about what i maybe forgot :D
 
 ##Adding your OS to bootloader:
 
