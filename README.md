@@ -33,6 +33,6 @@
 <a target="_blank" href="http://itmages.ru/image/view/2779093/b92e933a"><img src="http://storage3.static.itmages.ru/i/15/0719/s_1437347506_7019229_b92e933a97.png" /></a>
 
 ##Special thanks to:
-####DomanoSV for original ElectronusBIOS and cool idea
-####The_Pie for downloading and test my first'est version of this loader
+####[DomanoSV] (https://github.com/DomanoSV) for original ElectronusBIOS and cool idea
+####[The_Pie] (https://www.youtube.com/user/cybershadow0) for downloading and test my first'est version of this loader
 ####;)
