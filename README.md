@@ -16,3 +16,10 @@
 ####7. Missing of any of core files, or .Elico folder
 
 ####8. Something else about what i maybe forgot :D
+
+##Adding your OS to bootloader:
+
+####Open .Elico folder > Open "initrd" file with your favourite text editor > Add a new string with pressing "Enter ↵" key > Then write something looks like this:
+>TestOSName;testosloaderfile
+
+####[WARING: Do not add more than you need new strins! Else you get error in bootloader.]
