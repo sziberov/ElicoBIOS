@@ -11,7 +11,7 @@
 
 ####5. Device listing (System Configurations screen)
 
-####6. Basic bootloader without sandboxing (Sorry, i don't know how to add it)
+####6. Basic bootloader without sandboxing (Sorry, i don't know how to add it) It supports up to 12 items for your OS's or programs, and 13'th item for disk
 
 ####7. Missing of any of core files, or .Elico folder
 
