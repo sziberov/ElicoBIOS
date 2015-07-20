@@ -1,0 +1,7 @@
+logoEnabled = 1
+splashEnabled = 1
+animatedSplash = 1
+passwordProtection = 0
+password = "1111"
+CPUType = UltraCore
+CPUClock = 3.4GHz

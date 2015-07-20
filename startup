@@ -22,16 +22,163 @@ local bytesFree = fs.getFreeSpace("/")
 local clientId = os.computerID()
 local w, h = term.getSize()
 oldx, oldy = term.getCursorPos()
+--[[local logoEnabled = 1 --(1 = Enabled/0 = Disabled)]]
 --BIOS SETUP
-local logoEnabled = 1 --(1 = Enabled/0 = Disabled)
-local splashEnabled = 1 --(1 = Enabled/0 = Disabled)
-local animatedSplash = 1 --(1 = Enabled/0 = Disabled)
-local passwordProtection = 0 --(1 = Enabled/0 = Disabled)
-local password = "1111" --(Input only 20- symbols password.)
-local CPUType = "UltraCore" --(Input only 9- symbols text.)
-local CPUClock = "3.4GHz" --(Input only 9- symbols text.)
---End of SETUP
+function readCmos()
+	local function trimComments(line)
+	    local commentstart = string.len(line)
+		for i = 1, string.len(line) do
+			if string.byte(line, i) == string.byte(";") then
+				commentstart = i - 1
+				break
+			end
+		end
+		return string.sub(line, 0, commentstart)
+	end
+	local function split(line)
+		local equalssign = nil
+		for i = 1, string.len(line) do
+			if string.byte(line, i) == string.byte("=") or string.byte(line, i) == string.byte(":") then
+				equalssign = i - 1
+			end
+		end
+		if equalssign == nil then
+			return nil, nil
+		end
+		return string.sub(line, 1, equalssign - 1), string.sub(line, equalssign + 2)
+	end
+	function Trim(s)
+		return (s:gsub("^%s*(.-)%s*$", "%1"))
+	end
+	local function RemoveQuotes(s)
+		if string.byte(s, 1) == string.byte("\"") and string.byte(s, string.len(s)) == string.byte("\"") then
+			return string.sub(s, 2, -2)
+		end
+		return s
+	end
+	function openSettingsFile(path)
+		local settings = {}
+		local currentsection = {}
+		local currentsectionname = nil
+		local file = fs.open(path, "r")
+		local lines = true
+		settings["content"] = {}
+		while lines do
+			local currentline = file.readLine()
+			if currentline == nil then
+				lines = false
+				break
+			end
+			currentline = trimComments(currentline)
+			if Trim(currentline) ~= "" then
+				if string.byte(currentline, 1) == string.byte("[") then
+					if currentsectionname ~= nil then
+						settings["content"][currentsectionname] = currentsection
+						currentsection = {}
+					elseif currentsectionname == nil then
+						settings["content"][1] = currentsection
+						currentsection = {}
+					end
+					currentsectionname = string.sub(currentline, 2, -2)
+				else
+					local key, value = split(currentline)
+					if Trim(key) ~= nil and Trim(value) ~= nil then
+						local x = Trim(value)
+						if tonumber(x) then
+							x = tonumber(x)
+						else
+							x = RemoveQuotes(x)
+						end
+						if x ~= nil and tostring(Trim(key)) ~= nil then
+							currentsection[Trim(key)] = x
+						end
+						
+					end
+				end
+			end
+		end
+		if currentsectionname ~= nil then
+			settings["content"][currentsectionname] = currentsection
+			currentsection = {}
+		elseif currentsectionname == nil then
+			settings["content"][1] = currentsection
+			currentsection = {}
+		end
+		
+		function settings.addSection(name)
+			settings["content"][name] = {}
+		end
+		
+		function settings.getValue(key)
+			local x = settings["content"][1]
+			return x[key]
+		end
+		
+		function settings.getSectionedValue(section, key)
+			return settings["content"][section][key]
+		end
+		
+		function settings.setValue(key, value)
+			settings["content"][1][key] = value
+		end
+		
+		function settings.setSectionedValue(section, key, value)
+			settings["content"][section][key] = value
+		end
+		
+		function settings.save(path)
+			local file = fs.open(path, "w")
+			local d = settings["content"][1]
+			if d ~= nil then
+				for k, v in pairs(d) do
+					local x = v
+					if string.byte(v, 1) == string.byte(" ") or string.byte(v, string.len(v)) == string.byte(" ") then
+						x = "\""..v.."\""
+					end
+					file.writeLine(k.." = "..x)
+				end
+			end
+			for k, v in pairs(settings["content"]) do
+				if k ~= 1 then
+					file.writeLine("")
+					file.writeLine("["..k.."]")
+					for j, l in pairs(v) do
+						local x = l
+						if string.byte(l, 1) == string.byte(" ") or string.byte(l, string.len(l)) == string.byte(" ") then
+							x = "\""..l.."\""
+						end
+						file.writeLine(j.." = "..x)
+					end
+				end
+			end
+			file.close()
+		end
+		
+		return settings
+	end
 
+	settingsfile = openSettingsFile(".Elico/Cmos")
+	logoEnabled = settingsfile.getValue("logoEnabled") --(1 = Enabled/0 = Disabled)--
+	splashEnabled = settingsfile.getValue("splashEnabled") --(1 = Enabled/0 = Disabled)--
+	animatedSplash = settingsfile.getValue("animatedSplash") --(1 = Enabled/0 = Disabled)--
+	passwordProtection = settingsfile.getValue("passwordProtection") --(1 = Enabled/0 = Disabled)--
+	password = settingsfile.getValue("password") --(Input only 1-20 symbols password.)--
+	CPUType = settingsfile.getValue("CPUType") --(Input only 1-9 symbols text.)--
+	CPUClock = settingsfile.getValue("CPUClock") --(Input only 1-9 symbols text.)--
+end
+
+if not fs.exists(".Elico/Cmos") then
+	--DEFAULTS--
+	logoEnabled = 1 --(1 = Enabled/0 = Disabled)--
+	splashEnabled = 1 --(1 = Enabled/0 = Disabled)--
+	animatedSplash = 1 --(1 = Enabled/0 = Disabled)--
+	passwordProtection = 0 --(1 = Enabled/0 = Disabled)--
+	password = "0000" --(Input only 1-20 symbols password.)--
+	CPUType = "UltraCore" --(Input only 1-9 symbols text.)--
+	CPUClock = "3.4GHz" --(Input only 1-9 symbols text.)--
+else
+	readCmos()
+end
 
 --Local Functions                                      --
 
@@ -337,11 +484,11 @@ else
 	term.setBackgroundColor(colors.black) 
 	term.setTextColor(colors.white)
 end
-term.write("Elico BIOS v5.87")
+term.write("Elico BIOS v5.88")
 term.setCursorPos(3,2)
 term.write("Copyright (C) Elico Software")
 term.setCursorPos(1,h)
-term.write("20/07/2015-Elico-BIOS/Version-5-87/AZUZ-PC")
+term.write("20/07/2015-Elico-BIOS/Version-5-88/AZUZ-PC")
 
 for i = 1,6 do
 	if peripheral.isPresent(sidesList[i]) then
@@ -383,7 +530,49 @@ term.setCursorPos(1,4)
 term.write("Main Processor : ")
 term.setCursorBlink(true)
 sleep(0.8)
-term.write(""..CPUType.." "..CPUClock.."")
+if CPUType == nil then
+	CPUType = "UltraCore"
+	term.setCursorPos(18,4)
+	term.write(""..CPUType.." ")
+else
+	term.setCursorPos(18,4)
+	term.write(""..CPUType.." ")
+end
+if CPUType == "" then
+	CPUType = "UltraCore"
+	term.setCursorPos(18,4)
+	term.write(""..CPUType.." ")
+else
+	term.setCursorPos(18,4)
+	term.write(""..CPUType.." ")
+end
+if CPUClock == nil then
+	oldx, oldy = term.getCursorPos()
+	CPUClock = "3.4GHz"
+	local strLen = string.len(CPUType)
+	term.setCursorPos(18 + strLen + 1,4)
+	term.write(""..CPUClock.."")
+else
+	oldx, oldy = term.getCursorPos()
+	local strLen = string.len(CPUType)
+	term.setCursorPos(18 + strLen + 1,4)
+	term.write(""..CPUClock.."")
+end
+if CPUClock == "" then
+	oldx, oldy = term.getCursorPos()
+	CPUClock = "3.4GHz"
+	local strLen = string.len(CPUType)
+	term.setCursorPos(18 + strLen + 1,4)
+	term.write(""..CPUClock.."")
+else
+	oldx, oldy = term.getCursorPos()
+	local strLen = string.len(CPUType)
+	term.setCursorPos(18 + strLen + 1,4)
+	term.write(""..CPUClock.."")
+end
+
+
+
 term.setCursorPos(1,5)
 term.write("Memory Testing : ")
 sleep(0.8)
@@ -431,7 +620,28 @@ for i = 1,6 do
 		end
 	end
 end
-sleep(1.8)
+
+if not fs.exists(".Elico/Cmos") then
+	print("")
+	print("")
+	sleep(0.05)
+	term.write("CMOS checksum error - Defaults loaded")
+	term.setCursorPos(1,h - 2)
+	term.write("Press <")
+	term.setTextColor(colors.white)
+	term.write("F1")
+	term.setTextColor(colors.lightGray)
+	term.write(">: To continue")
+	while true do
+		local event, key = os.pullEvent( "key" )
+	  
+		if key == keys.f1 then 
+	    break
+		end
+	end
+else
+	sleep(1.8)
+end
 
 term.clear()
 term.setCursorPos(1,1)
