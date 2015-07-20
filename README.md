@@ -32,6 +32,7 @@
 <a target="_blank" href="http://itmages.com/image/view/2782144/c891e65f"><img src="http://storage3.static.itmages.com/i/15/0720/s_1437406448_4814435_c891e65f98.png" /></a>
 <a target="_blank" href="http://itmages.ru/image/view/2779096/c4577b6b"><img src="http://storage4.static.itmages.ru/i/15/0719/s_1437347507_3487485_c4577b6b37.png" /></a>
 <a target="_blank" href="http://itmages.ru/image/view/2779093/b92e933a"><img src="http://storage3.static.itmages.ru/i/15/0719/s_1437347506_7019229_b92e933a97.png" /></a>
+<a target="_blank" href="http://itmages.ru/image/view/2782790/7f515b4b"><img src="http://storage2.static.itmages.ru/i/15/0720/s_1437419587_5307582_7f515b4bba.png" /></a>
 
 ##Special thanks to:
 ####[DomanoSV] (https://github.com/DomanoSV) for original ElectronusBIOS and cool idea
