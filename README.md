@@ -3,7 +3,7 @@
 ##It supports:
 ####1. Grayscale and colour monitors
 
-####2. Basic settings system (Open startup file and scroll to "--BIOS SETUP" line)
+####2. Settings system (Open .Elico folder > Open "Cmos" file with any Text Editor > Edit settings > Save)
 
 ####3. Password 
 
