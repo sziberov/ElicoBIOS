@@ -337,7 +337,7 @@ local function readBootOptions()
 			name = t[1],
 			dir = t[2],
 			args = t[3] })
-		if c == 10 then break end  
+		if c == 12 then break end  
 	end
 	if bootableDisk then
 		table.insert(bootOpt, { 
@@ -902,23 +902,30 @@ while true do
 		end
 		if term.isColor then
 			if i == slc then
-				if term.isColor() then
+				if term.isColor() then --String Color Highlighted
 					term.setBackgroundColor(colors.gray)
 					term.setTextColor(colors.lightGray)
+					if bootOpt[i].dir == mountName then --Disk String Color Highlighted
+						term.setBackgroundColor(colors.gray)
+						term.setTextColor(colors.orange)
+					end
 				else
 					term.setBackgroundColor(colors.black)
 					term.setTextColor(colors.white)
 				end
 					term.setCursorPos(19,(19 / 2 - c / 2 + i))
 	                	write(str)
+	                term.setTextColor(colors.lightGray)
 					term.setCursorPos(18,(19 / 2 - c / 2 + i))
 						write("->")
-	                
-	                
 			else 
-				if term.isColor() then
+				if term.isColor() then --String Color Not Highlighted
 					term.setBackgroundColor(colors.lightGray)
 					term.setTextColor(colors.gray)
+					if bootOpt[i].dir == mountName then --Disk String Color Not Highlighted
+						term.setBackgroundColor(colors.lightGray)
+						term.setTextColor(colors.orange)
+					end
 				else
 					term.setBackgroundColor(colors.white)
 					term.setTextColor(colors.black)
