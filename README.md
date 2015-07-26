@@ -35,7 +35,7 @@
 <a target="_blank" href="http://itmages.ru/image/view/2806856/945f5fdf"><img src="http://storage4.static.itmages.ru/i/15/0726/h_1437910433_3880244_945f5fdf9f.png" /></a>
 ####Animated splash screen:
 <a target="_blank" href="http://itmages.ru/image/view/2779095/d91d16c6"><img src="http://storage3.static.itmages.ru/i/15/0719/h_1437347506_9735670_d91d16c6df.png" /></a>
-####Post screen:
+####POST screen:
 <a target="_blank" href="http://itmages.ru/image/view/2779094/3dc7747f"><img src="http://storage3.static.itmages.ru/i/15/0719/h_1437347506_1277453_3dc7747f6c.png" /></a>
 ####CMOS checksum error. This happens if Cmos file is missing:
 <a target="_blank" href="http://itmages.com/image/view/2782144/c891e65f"><img src="http://storage3.static.itmages.com/i/15/0720/h_1437406448_4814435_c891e65f98.png" /></a>
