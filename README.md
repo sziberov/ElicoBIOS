@@ -11,13 +11,13 @@
 
 ####5. Device listing (System Configurations screen)
 
-####6. Basic bootloader without sandboxing (Sorry, i don't know how to add it) It supports up to 12 items for your OS's or programs, and 13'th item for disk
+####6. Basic bootloader without sandboxing (Sorry, i don't know how to add it). It supports up to 12 items for your OS's or programs, and 13'th item for disk
 
 ####7. Missing of any of core files, or .Elico folder
 
 ####8. Blocking Ctrl+T. It means you can't terminate BIOS while it booting
 
-####9. Something else about what i maybe forgot :D
+####9. Something else about what I maybe forgot :D
 
 ##Adding your OS to bootloader:
 
