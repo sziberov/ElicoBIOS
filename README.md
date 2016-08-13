@@ -1,4 +1,4 @@
-#Loader look like AwardBIOS - ElicoBIOS.
+#Loader, that looks like AwardBIOS - ElicoBIOS.
 
 ##It supports:
 ####1. Grayscale and colour monitors
